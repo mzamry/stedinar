@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ethers } from "ethers";
+import { BrowserProvider, Contract, parseEther, formatEther } from "ethers";
 import "./App.css";
 import { CONTRACT_ADDRESS } from "./config";
 import abi from "./abi/FlexibleStaking.json";
@@ -23,8 +23,8 @@ function App() {
     try {
       const [staked, rewards] = await contract.userInfo(walletAddress);
       setUserInfo({
-        staked: ethers.utils.formatEther(staked),
-        pendingRewards: ethers.utils.formatEther(rewards),
+        staked: formatEther(staked),
+        pendingRewards: formatEther(rewards),
       });
     } catch (err) {
       console.error("Error fetching user info:", err);
@@ -36,9 +36,10 @@ function App() {
       try {
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         setWalletAddress(accounts[0]);
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const stakingContract = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
+
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const stakingContract = new Contract(CONTRACT_ADDRESS, abi, signer);
         setContract(stakingContract);
       } catch (err) {
         console.error("Wallet connection failed:", err);
@@ -51,7 +52,7 @@ function App() {
   const handleStake = async () => {
     if (!contract || !stakingAmount) return;
     try {
-      const tx = await contract.stake(ethers.utils.parseEther(stakingAmount));
+      const tx = await contract.stake(parseEther(stakingAmount));
       await tx.wait();
       setStakingAmount("");
       fetchUserInfo();
@@ -65,7 +66,7 @@ function App() {
   const handleUnstake = async () => {
     if (!contract || !stakingAmount) return;
     try {
-      const tx = await contract.unstake(ethers.utils.parseEther(stakingAmount));
+      const tx = await contract.unstake(parseEther(stakingAmount));
       await tx.wait();
       setStakingAmount("");
       fetchUserInfo();
