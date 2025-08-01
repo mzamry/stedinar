@@ -51,9 +51,12 @@ function App() {
 
   const handleStake = async () => {
     if (!contract || !stakingAmount) return;
+    console.log("⏳ Stake initiated:", stakingAmount);
     try {
       const tx = await contract.stake(parseEther(stakingAmount));
+      console.log("📤 Transaction hash:", tx.hash);
       await tx.wait();
+      console.log("✅ Stake confirmed");
       setStakingAmount("");
       fetchUserInfo();
       alert("✅ Staking successful!");
