@@ -49,14 +49,28 @@ function App() {
     }
   };
 
+  const handleApprove = async () => {
+    if (!contract || !stakingAmount) return;
+    try {
+      const tokenAddress = await contract.stakingToken();
+      const tokenAbi = ["function approve(address spender, uint256 amount) public returns (bool)"];
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const tokenContract = new Contract(tokenAddress, tokenAbi, signer);
+      const tx = await tokenContract.approve(CONTRACT_ADDRESS, parseEther(stakingAmount));
+      await tx.wait();
+      alert("✅ Approval successful!");
+    } catch (err) {
+      console.error("Approval failed:", err);
+      alert("❌ Approval failed!");
+    }
+  };
+
   const handleStake = async () => {
     if (!contract || !stakingAmount) return;
-    console.log("⏳ Stake initiated:", stakingAmount);
     try {
       const tx = await contract.stake(parseEther(stakingAmount));
-      console.log("📤 Transaction hash:", tx.hash);
       await tx.wait();
-      console.log("✅ Stake confirmed");
       setStakingAmount("");
       fetchUserInfo();
       alert("✅ Staking successful!");
@@ -112,6 +126,7 @@ function App() {
           onChange={(e) => setStakingAmount(e.target.value)}
         />
         <div className="button-group">
+          <button onClick={handleApprove} disabled={!walletAddress}>Approve</button>
           <button onClick={handleStake} disabled={!walletAddress}>Stake</button>
           <button onClick={handleUnstake} disabled={!walletAddress}>Unstake</button>
           <button onClick={handleClaim} disabled={!walletAddress}>Claim Rewards</button>
